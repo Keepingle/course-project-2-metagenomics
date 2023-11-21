@@ -1,4 +1,4 @@
-###
+algae###
 README by Xinpeng Zhang.
 Revised by Dr. Yanbin Yin.
 
@@ -83,13 +83,13 @@ trim_galore --paired your/path/of/fastq1.gz_file  your/path/of/fastq2.gz_file  -
 #3. Use fastqc again to check the quality again, and report the difference. You will get the trimmed read fastq files.
 
 #part2, remove algae genes from raw reads (~ 1-2 hrs).
-We want to analyze the microbiome data not the host data, so we need to remove those. Therefore, we need to prepare the reference genome file, which means the genomes we would like to remove, and use tools called Bowtie2 and samtools to do that. Here our reference genomes include algal nuclear genomes, plastid genomes, and mitogenomes sequencing by our lab. We'll then make index file for read mapping to the reference genomes. The algea_reference_genome.fna will be the reference genome file.
+We want to analyze the microbiome data not the host data, so we need to remove those. Therefore, we need to prepare the reference genome file, which means the genomes we would like to remove, and use tools called Bowtie2 and samtools to do that. Here our reference genomes include algal nuclear genomes, plastid genomes, and mitogenomes sequencing by our lab. We'll then make index file for read mapping to the reference genomes. The algae_reference_genome.fna will be the reference genome file.
 
 cd ..
-mkdir part2_remove_algea_genomes
-cd part2_remove_algea_genomes
+mkdir part2_remove_algae_genomes
+cd part2_remove_algae_genomes
 cp -r /work/yinlab/xinpeng/final_course_project/new/reference_genome .
-cat * > algea_reference_genome.fna 
+cat * > algae_reference_genome.fna 
 
 
 
