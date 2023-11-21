@@ -1,0 +1,535 @@
+###
+README by Xinpeng Zhang.
+Revised by Dr. Yanbin Yin.
+
+Please read the instruction before you running commands.
+
+Topic: Algal microbiome data analysis
+
+We'll use this protocol command text file to provide all the commands and scripts for you (to avoid the ppt/word character formatting issue based on the previous experience).
+
+All commands and scripts will be saved here.
+
+Two sub-projects: (1) focus on microbiome (required), (2) focus on viral contigs (optional)
+
+The purpose of this project: 
+
+Learn how to use raw metagenome sequencing data (fastq file/files) to do read cleaning, assembly/binning, and finally get MAGs for analyzing protein sequences, annotations, and functions.
+
+For different programs, you would have two ways to run those:
+
+1, use the preinstalled programs on hcc, which is convenient for beginners. However, hcc may not have the latest versions, and may have no newly published programs. You could search which programs are available on hcc website: https://hcc.unl.edu/docs/applications/modules/available_software_for_swan/. You could ask HCC to install new programs that you need: https://hcc.unl.edu/software-installation-request
+
+2, I would recommand you using conda/mamba when you are more experienced. You could create your own software management environment on HCC and install your programs in that environment. Mamba is almost the same thing with Conda but much faster.
+
+###
+Sub-project (1) focus on microbiome (required)
+###
+
+#part0, raw data
+
+#in this project, we'll work on illumina pair-end metagenomic sequencing data of algae (Zygnematophyceae). It contains two raw read files: fastq1 and fastq2. The data consists of reads from both (host) algae and microbiome. We'll remove the algae data first and then focus on analyzing the microbiome data.
+
+#cp the read data folder by following steps:
+
+cd $WORK
+mkdir final_project
+cd final_project
+cp -r /work/yinlab/xinpeng/final_course_project/new/final_process/part0_raw_data .
+
+
+#part1, data preprocessing (~ 5hrs)
+
+#We need check the quality of sequencing data first, and trim low quality data to get better results.
+#we will use fastqc to do the quality check, and use trim_galore to do the trim.
+
+#1. quality check before trim (~5-10 mins)
+
+mkdir part1_data_preprocessing
+cd part1_data_preprocessing
+ml fastqc
+fastqc ../part0_raw_data/M2CH_S1_L001_R1_001.fastq.gz --outdir .
+fastqc ../part0_raw_data/M2CH_S1_L002_R1_001.fastq.gz --outdir .
+
+#you will get two pair of results: zip&html, zip file is the details of quality, and html is the visulization of result.
+#Download the html file to your laptop (use HCC ondemand) and see the results.
+#Report the results of quality check, and explain the meaning of each plot.
+
+#2. After that, we would delete those low quality reads by trimming using trim_galore (2-4hrs, depends the cores you used).
+
+#Remember to do module unload your_previous_program, because sometimes different program may cause conflicts.
+#won't remind you again.
+#for the long time progress, we will offer you slurms to submit jobs on hcc, use nano to edit and save, and then sbatch.
+
+module unload fastqc
+
+
+#!/bin/bash
+#SBATCH --job-name=trim
+#SBATCH --time=124:00:00
+#SBATCH --mem=100gb
+#SBATCH --partition=batch,guest (reminder: you could add your own partition, i.e. benson or yinlab)
+#SBATCH --output=trim.%J.out
+#SBATCH --error=trim.%J.err
+#SBATCH --ntasks=20	
+#SBATCH --cpus-per-task=1
+
+module load trim_galore/0.6
+trim_galore --paired your/path/of/fastq1.gz_file  your/path/of/fastq2.gz_file  -j 20
+
+# sbatch the job, you would get two trim reports, one for each fastq file.
+
+
+#3. Use fastqc again to check the quality again, and report the difference. You will get the trimmed read fastq files.
+
+#part2, remove algae genes from raw reads (~ 1-2 hrs).
+We want to analyze the microbiome data not the host data, so we need to remove those. Therefore, we need to prepare the reference genome file, which means the genomes we would like to remove, and use tools called Bowtie2 and samtools to do that. Here our reference genomes include algal nuclear genomes, plastid genomes, and mitogenomes sequencing by our lab. We'll then make index file for read mapping to the reference genomes. The algea_reference_genome.fna will be the reference genome file.
+
+cd ..
+mkdir part2_remove_algea_genomes
+cd part2_remove_algea_genomes
+cp -r /work/yinlab/xinpeng/final_course_project/new/reference_genome .
+cat * > algea_reference_genome.fna 
+
+
+
+#!/bin/bash
+#SBATCH --job-name=Bowtie2
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --time=168:00:00
+#SBATCH --mem=30gb
+#SBATCH --output=Bowtie2.%J.out
+#SBATCH --error=Bowtie2.%J.err
+#SBATCH --partition=yinlab,batch,guest
+
+ml bowtie/2.3	
+
+ml samtools/1.3	
+
+bowtie2 -x index_prefix  -1 your/path/of/trimmed_fastq1.gz_file -2 your/path/of/trimmed_fastq2.gz_file -S bowtie2_alignments.sam --local -p $SLURM_NTASKS_PER_NODE
+
+samtools view -bS -@ 16 bowtie2_alignments.sam > bowtie2_alignments.bam
+
+samtools sort -@ 16 bowtie2_alignments.bam -o bowtie2_alignments.sorted.bam
+
+samtools index bowtie2_alignments.sorted.bam
+
+samtools view -b -f 12 -F 256 -@ 16 bowtie2_alignments.sorted.bam > unmapped.bam
+
+samtools fastq -@ 16 -1 unmapped_1.fastq -2 unmapped_2.fastq unmapped.bam
+
+
+# you will get two fastq files which contains reads unmapped to the algae genomes (i.e., de-contaminated reads).
+#check the outputs and find the meaning of those files, report those.
+
+
+ 
+#part3, assmebly with filtered reads (We will use two different tools : Megahit with ~40mins and MetaSPAde with ~8hrs).
+#you will compare the results between two tools.
+
+
+#!/bin/bash
+#SBATCH --job-name=megahit
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=32
+#SBATCH --time=168:00:00
+#SBATCH --mem=250gb
+#SBATCH --output=megahit.%J.out
+#SBATCH --error=megahit.%J.err
+#SBATCH --partition=yinlab,batch,guest
+
+ml megahit/1.2
+
+megahit  -1 your/path/to/your/previous/unmapped_1.fastq -2 your/path/to/your/previous/unmapped_2.fastq -o megahit_result -t 32
+
+
+
+#!/bin/bash
+#SBATCH --job-name=metaspade
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=32
+#SBATCH --time=168:00:00
+#SBATCH --mem=250gb
+#SBATCH --output=metaspade.%J.out
+#SBATCH --error=metaspade.%J.err
+#SBATCH --partition=yinlab,batch,guest
+
+ml spades/py35/3.13	
+
+spades.py --meta -1 unmapped_1.fastq -2 unmapped_2.fastq -o metaspade_result --threads 32
+
+
+#when the jobs are done, you would get two folders:
+#for the metaSPAde, it contains two results: contigs.fasta and scaffolds.fasta; we'll use contigs.fa to continue.
+#for the  megahit_result, we'll use final.contigs.fa.
+#you can compare the difference between two contig files (number, length, etc.).
+#for this project, we recommend to use megahit result for the all the following analyses.
+#but you are free to choose metaSPAde result, or do both
+
+
+
+#part4, bin contigs to make bins (MAGs) based on metawrap(~2.5 hrs).
+#your_assembly_contig_fasta_file is the file name of whichever assembly file you will use (contigs.fasta from metaSPAde or final.contigs.fa from megahit).
+
+#!/bin/bash
+#SBATCH --job-name=metawrap
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --time=168:00:00
+#SBATCH --mem=250gb
+#SBATCH --output=metawrap.%J.out
+#SBATCH --error=metawrap.%J.err
+#SBATCH --partition=yinlab,batch,guest
+
+ml metawrap/1.3
+
+metawrap binning -o BINNING_megahit -t 16 -a your_assembly_contig_fasta_file --metabat2 --maxbin2 --concoct your_fastq1file_removed_algae_genes your_fastq2file_removed_algae_genes -t 16
+
+metawrap bin_refinement -o BIN_REFINEMENT_megahit -t 32 -A BINNING_megahit/metabat2_bins/ -B BINNING_megahit/maxbin2_bins/ -C BINNING_megahit/concoct_bins/
+
+#In the metawrap, it combines three different method to do the bins, and bin_refinement is to combine those results together and summarize to give the final result.
+
+#Compare those results and report. 
+#the final results are in BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa, each of those means a MAG.
+
+
+#part5, check the quality of bins by CheckM2.
+#checkM is included in metawrap, but they update it as CheckM2 this year.
+#on hcc they have not installed CheckM2, so we'll use conda to install it.
+
+mkdir part5_checkm2
+cd part5_checkm2
+git clone --recursive https://github.com/chklovski/checkm2.git && cd checkm2
+conda env create -n checkm2 -f checkm2.yml
+conda activate checkm2
+bin/checkm2 -h #to check if it works
+checkm2 database --download --path /custom/path/
+export CHECKM2DB="path/to/database"
+
+#!/bin/bash
+#SBATCH --job-name=checkm2
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --time=168:00:00
+#SBATCH --mem=250gb
+#SBATCH --output=checkm2.%J.out
+#SBATCH --error=checkm2.%J.err
+#SBATCH --partition=yinlab,batch,guest
+
+ml anaconda
+
+conda activate checkm2
+
+
+your/own/path/bin/checkm2  predict --threads 16 --input ../bining/BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa  --output-directory checkm2_result
+
+#report the results
+
+#part6, taxonomic annotation by GTDB (~1-2hrs).
+
+
+#!/bin/bash
+#SBATCH --job-name=gtdb
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --time=168:00:00
+#SBATCH --mem=250gb
+#SBATCH --output=gtdb.%J.out
+#SBATCH --error=gtdb.%J.err
+#SBATCH --partition=yinlab,batch,guest
+
+ml gtdbtk/1.5 
+
+gtdbtk classify_wf --genome_dir ../bining/BIN_REFINEMENT_megahit/metawrap_70_10_bins/ --out_dir GTDB/ --cpus 16 --extension .fa
+
+#you need to report the taxonomic assignment for each MAG from GTDB.
+
+
+#part7, use DRAM for MAG functional annotation.
+
+#!/bin/bash
+#SBATCH --job-name=dram
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --time=168:00:00
+#SBATCH --mem=250gb
+#SBATCH --output=dram.%J.out
+#SBATCH --error=dram.%J.err
+#SBATCH --partition=yinlab,batch,guest
+
+ml dram/1.2
+
+DRAM.py annotate -i '../bining/BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa' -o annotation
+DRAM.py distill -i annotation/annotations.tsv -o distill --trna_path annotation/trnas.tsv --rrna_path annotation/rrnas.tsv
+
+
+
+#report the results of DRAM.
+
+
+
+
+
+
+
+#####
+focus on viral contigs (optional)
+https://www.protocols.io/view/viral-sequence-identification-sop-with-virsorter2-5qpvoyqebg4o/v3?step=4
+#####
+
+#Once get contigs.fa (above part3), follow the viral SOP of Dr. Sullivan (above link): 
+
+#part1,Run VirSorter2 with relax conditions for viral contigs 
+#part2,Run checkV for quality control of viral contigs
+#part3,Run the Virsorter2 again based on the second step to finalize viral contigs
+#part4,Run DRAM-v for the annotation of AMGs 
+#combine in one slrum
+
+conda create -n viral-id-sop virsorter=2
+virsorter setup -d db-vs2 -j 4
+
+
+#!/bin/bash
+#SBATCH --job-name=virsorter_1
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=32
+#SBATCH --time=168:00:00
+#SBATCH --mem=250gb
+#SBATCH --output=virsorter2.%J.out
+#SBATCH --error=virsorter2.%J.err
+#SBATCH --partition=yinlab,batch,guest
+
+ml anaconda
+conda activate viral-id-sop
+
+
+virsorter run --keep-original-seq -i your_contig_fa_from_megahit_or_metaSPAde -w vs2-pass1 --include-groups dsDNAphage,ssDNA --min-length 5000 --min-score 0.5 -j 32 all   
+
+ml checkv
+
+checkv end_to_end vs2-pass1/final-viral-combined.fa checkv -t 28 -d /fs/project/PAS1117/jiarong/db/checkv-db-v1.0
+
+
+virsorter run --seqname-suffix-off --viral-gene-enrich-off --provirus-off --prep-for-dramv -i checkv/combined.fna -w vs2-pass2 --include-groups dsDNAphage,ssDNA --min-length 5000 --min-score 0.5 -j 32 all
+
+ml dram/1.2
+
+DRAM-v.py annotate -i vs2-pass2/for-dramv/final-viral-combined-for-dramv.fa -v vs2-pass2/for-dramv/viral-affi-contigs-for-dramv.tab -o dramv-annotate --skip_trnascan --threads 32 --min_contig_size 1000
+
+DRAM-v.py distill -i dramv-annotate/annotations.tsv -o dramv-distill
+
+
+
+#part5, further filtering viral contigs to extract high-confident phage contigs 
+
+#Keep1: viral_gene >0
+#Keep2: viral_gene =0 AND (host_gene =0 OR score >=0.95 OR hallmark >2)
+#we only keep those two situation, keep 1 could be gotten from checkv/contamination.tsv
+
+cat checkv/contamination.tsv | awk '{if($4>0) print $1}' > keep1
+
+#keep 2 could extract viral_genes=0 and then keep this list to map in the vs2-pass1/final-viral-score.tsv.
+
+cat checkv/contamination.tsv | awk '{if($4==0) print $0}' | awk '{if($5 ==0) print $1}' > keep2_1
+cat checkv/contamination.tsv | awk '{if($4==0) print $1}' > keep2_potential
+grep -wFf keep2_potential vs2-pass1/final-viral-score.tsv | awk '{if ($4 >= 0.95) print$1}' > keep2_2
+grep -wFf keep2_potential vs2-pass1/final-viral-score.tsv | awk '{if ($7 > 2) print$1}' > keep2_3
+
+#after that, we have four files with all viral contigs 
+#part6, after finding the results, do the host prediction and taxononmy prediction.
+
+ml seqkit
+cat keep1 keep2_1 keep2_2 keep2_3 > total_selected
+seqkit grep -n -f total_selected vs2-pass1/final-viral-combined.fa > potentail_virus.fa
+# And now we extract all viral contigs.
+#Compare the results with bacteria part, find if there are any prophage in bacteria genomes.
+
+
+#part6, find the tax of virus 
+
+#we'll use pharokka to annotate those viral contigs, and use the protein sequence to do the tax prediction.
+#pharokka are developed for phage genome annotation.
+
+git clone https://github.com/gbouras13/pharokka.git
+cd pharokka
+mamba env create -f environment.yml -p $COMMON/conda_env/pharokka
+conda activate /common/yinlab/xinpeng/conda_env/pharokka
+pharokka/bin/install_databases.py 
+
+#it will tell you the path of db
+
+
+#!/bin/bash
+#SBATCH --job-name=pharokka
+#SBATCH --ntasks-per-node=32
+#SBATCH --time=168:00:00
+#SBATCH --mem=100gb
+#SBATCH --output=pharokka.%J.out
+#SBATCH --error=pharokka.%J.err
+#SBATCH --partition=yinlab,batch,guest
+#SBATCH --license=common
+
+
+ml anaconda
+conda activate /common/yinlab/xinpeng/conda_env/pharokka
+
+pharokka/bin/pharokka.py -i ../virsorter2/potentail_virus.fa -o annotation -d /work/yinlab/xinpeng/final_course_project/new/preprocessing/tax_virus/pharokka/databases -t 32
+
+#it takes 1265.8s
+# we could also plot the viral contigs with gene annotation:
+ml seqkit
+seqkit split -i -f -O split_contig_for_plot --by-id ../virsorter2/potentail_virus.fa
+for i in `ls split_contig_for_plot`; do pharokka/bin/pharokka_plotter.py -i $1 -n $i -o pharokka_output_directory; done
+
+
+ 
+#After we get the protein sequence file, we'll use vCONTACT2 for viral taxonomy annotation.
+#for vCONTACT2, it needs two input file:
+sed '/#/d' annotation/pharokka.gff | grep "ID=" | cut -f 9 | cut -d';' -f1 > proteinid
+
+sed '/#/d' annotation/pharokka.gff | grep "ID=" | cut -f 1 > contigid
+
+paste -d',' proteinid contigid  > gene2genome.csv
+sed -i 's/$/,None_provided/' gene2genome.csv
+sed -i 's/ID=//' gene2genome.csv
+sed -i '1s/^/protein_id,contig_id,keywords\n/' gene2genome.csv
+
+
+
+
+#!/bin/bash
+#SBATCH --job-name=vcontact2
+#SBATCH --ntasks-per-node=32
+#SBATCH --time=168:00:00
+#SBATCH --mem=100gb
+#SBATCH --output=vcontact2.%J.out
+#SBATCH --error=vcontact2.%J.err
+#SBATCH --partition=yinlab,batch,guest
+#SBATCH --license=common
+
+
+ml vcontact2
+vcontact2 --raw-proteins you_protein_file --proteins-fp proteins --db 'ProkaryoticViralRefSeq85-Merged' --output-dir vcontact2_output --threads 32
+
+#after checking the results, only a few phages could be assigned to taxonomy classification, which is normal. We could use diamond blastn to search NCBI refseq virus database to double check.
+
+
+ml biodata
+mkdir viral_refseq_db
+cd viral_refseq_db
+cp  refseq_viral_genomic.fasta .
+makeblastdb -in refseq_viral_genomic.fasta -dbtype nucl -out refseq_viral_genomic_db
+cd ..
+
+#!/bin/bash
+#SBATCH --job-name=blastn
+#SBATCH --ntasks-per-node=32
+#SBATCH --time=168:00:00
+#SBATCH --mem=100gb
+#SBATCH --output=blastn.%J.out
+#SBATCH --error=blastn.%J.err
+#SBATCH --partition=yinlab,batch,guest
+
+ml blast/2.13
+
+blastn -query $1 -db viral_refseq_db/refseq_viral_genomic_db -out viral_vs_viral_blast_results.txt -outfmt 6 -max_target_seqs 10 -evalue 1e-3 -num_threads 32
+
+# and run those in the terminal
+ml biopython
+
+awk '{print $2}' blast_results.txt > ncbi_ids.txt
+
+
+#make a py file called ncbi_tax.py :
+
+“”“”“”“”
+from Bio import Entrez
+
+# set email
+Entrez.email = "xzhang55@huskers.unl.edu"
+
+# read NCBI ID
+with open("ncbi_ids.txt") as file:
+    ncbi_ids = file.read().splitlines()
+
+unique_ids = set(ncbi_ids)
+
+# get tax
+for ncbi_id in unique_ids:
+    handle = Entrez.efetch(db="nucleotide", id=ncbi_id, rettype="gb", retmode="xml")
+    records = Entrez.read(handle)
+    for record in records:
+        # 提取分类学信息
+        if 'GBSeq_taxonomy' in record:
+            taxonomy = record['GBSeq_taxonomy']
+            print(f"{ncbi_id}: {taxonomy}")
+        else:
+            print(f"{ncbi_id}: Taxonomy information not found")
+    handle.close()
+“”“”“”“”“”“‘
+
+
+#and run it
+python ncbi_tax.py
+
+
+
+#In the result file, we could find that very few viral genomes are assigned with a taxonomy, which means most of those are unknown virus and verify the vcontact2 result.
+
+
+#part7, predict the host of viral contigs
+#we would directly use BLASTN to search refseq bacteria genomes.
+
+
+#!/bin/bash
+#SBATCH --job-name=blastn
+#SBATCH --ntasks-per-node=32
+#SBATCH --time=168:00:00
+#SBATCH --mem=100gb
+#SBATCH --output=blastn.%J.out
+#SBATCH --error=blastn.%J.err
+#SBATCH --partition=yinlab,batch,guest
+
+
+ml blast/2.13
+ml biodata
+
+blastn -query $1 -db $BLAST/ref_prok_rep_genomes -out viral_vs_viral_blast_results.txt -outfmt 6 -max_target_seqs 10 -evalue 1e-3 -num_threads 32 -task megablast
+
+
+
+
+Create a python file
+''''''''
+
+# read the input file
+
+blast_output_file = "viral_vs_viral_blast_results.txt"
+host_matches_file = "host_matches.txt"
+
+# set thresholds
+min_length = 2500
+min_identity = 90.0
+min_coverage = 75.0
+
+with open(blast_output_file, 'r') as file, open(host_matches_file, 'w') as outfile:
+    for line in file:
+        fields = line.strip().split()
+        query_id, subject_id, identity, length = fields[0], fields[1], float(fields[2]), int(fields[3])
+        alignment_length = int(fields[7]) - int(fields[6])
+
+
+#check the condition
+        if length >= min_length and identity >= min_identity and (alignment_length / length * 100) >= min_coverage:
+            outfile.write(line)
+
+print(f"Filtered results saved to {host_matches_file}")
+''''''''
+
+And run it.
+
+
+
+And use the previous python file to check the taxonomy.
+
