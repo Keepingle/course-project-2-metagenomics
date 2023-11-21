@@ -107,6 +107,8 @@ ml bowtie/2.3
 
 ml samtools/1.3	
 
+bowtie2-build your_reference_genome_file index_prefix
+
 bowtie2 -x index_prefix  -1 your/path/of/trimmed_fastq1.gz_file -2 your/path/of/trimmed_fastq2.gz_file -S bowtie2_alignments.sam --local -p $SLURM_NTASKS_PER_NODE
 
 samtools view -bS -@ 16 bowtie2_alignments.sam > bowtie2_alignments.bam
@@ -460,7 +462,8 @@ for ncbi_id in unique_ids:
     handle = Entrez.efetch(db="nucleotide", id=ncbi_id, rettype="gb", retmode="xml")
     records = Entrez.read(handle)
     for record in records:
-        # 提取分类学信息
+        # extract tax information
+
         if 'GBSeq_taxonomy' in record:
             taxonomy = record['GBSeq_taxonomy']
             print(f"{ncbi_id}: {taxonomy}")
