@@ -103,9 +103,9 @@ cat * > algae_reference_genome.fna
 #SBATCH --error=Bowtie2.%J.err
 #SBATCH --partition=yinlab,batch,guest
 
-ml bowtie/2.3	
+ml bowtie/2.5
 
-ml samtools/1.3	
+ml samtools/1.9	
 
 bowtie2-build your_reference_genome_file index_prefix
 
