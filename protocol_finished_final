@@ -288,8 +288,8 @@ https://www.protocols.io/view/viral-sequence-identification-sop-with-virsorter2-
 #part4,Run DRAM-v for the annotation of AMGs 
 #combine in one slrum
 
-conda create -n viral-id-sop virsorter=2
-virsorter setup -d db-vs2 -j 4
+conda create -n viral-id-sop virsorter=2 checkv dram 
+conda activate viral-id-sop
 
 
 #!/bin/bash
@@ -304,6 +304,10 @@ virsorter setup -d db-vs2 -j 4
 
 ml anaconda
 conda activate viral-id-sop
+
+virsorter setup -d db-vs2 -j 4
+checkv download_database .
+DRAM-setup.py prepare_databases --skip_uniref --output_dir db-dramv
 
 
 virsorter run --keep-original-seq -i your_contig_fa_from_megahit_or_metaSPAde -w vs2-pass1 --include-groups dsDNAphage,ssDNA --min-length 5000 --min-score 0.5 -j 32 all   
