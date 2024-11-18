@@ -1,16 +1,10 @@
-algae###
-README by Xinpeng Zhang.
-Revised by Dr. Yanbin Yin.
+
+Project title:
+Microbiome data analysis of Zygnema green algae
 
 Please read the instruction before you running commands.
-
-Topic: Algal microbiome data analysis
-
 We'll use this protocol command text file to provide all the commands and scripts for you (to avoid the ppt/word character formatting issue based on the previous experience).
-
 All commands and scripts will be saved here.
-
-Two sub-projects: (1) focus on microbiome (required), (2) focus on viral contigs (optional)
 
 The purpose of this project: 
 
@@ -21,10 +15,6 @@ For different programs, you would have two ways to run those:
 1, use the preinstalled programs on hcc, which is convenient for beginners. However, hcc may not have the latest versions, and may have no newly published programs. You could search which programs are available on hcc website: https://hcc.unl.edu/docs/applications/modules/available_software_for_swan/. You could ask HCC to install new programs that you need: https://hcc.unl.edu/software-installation-request
 
 2, I would recommand you using conda/mamba when you are more experienced. You could create your own software management environment on HCC and install your programs in that environment. Mamba is almost the same thing with Conda but much faster.
-
-###
-Sub-project (1) focus on microbiome (required)
-###
 
 #part0, raw data
 
