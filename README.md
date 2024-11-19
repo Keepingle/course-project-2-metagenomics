@@ -1,6 +1,7 @@
 # Course project 2 metagenomics
 
 The course project 2 of Dr.Yanbin Yin's course in 2024 fall.
+
 <b>Project title: Microbiome data analysis of Zygnema green algae</b>
 
 <b>Goals: </b>
