@@ -37,9 +37,11 @@ cp -r /work/yinlab/yixing/course_project2/project_raw_data .
 
 mkdir part1_data_preprocessing
 cd part1_data_preprocessing
+mkdir prefastqc
+cd prefastqc/
 ml fastqc
-fastqc ../project_raw_data/MZCH241_bacteria.R_1.fastq --outdir .
-fastqc ../project_raw_data/MZCH241_bacteria.R_2.fastq --outdir .
+fastqc ../../project_raw_data/MZCH241_bacteria.R_1.fastq --outdir .
+fastqc ../../project_raw_data/MZCH241_bacteria.R_2.fastq --outdir .
 
 #you will get two pair of results: zip&html, zip file is the details of quality, and html is the visulization of result.
 #Download the html file to your laptop (use HCC ondemand) and see the results.
@@ -51,6 +53,9 @@ fastqc ../project_raw_data/MZCH241_bacteria.R_2.fastq --outdir .
 #won't remind you again.
 #for the long time progress, we will offer you slurms to submit jobs on hcc, use nano to edit and save, and then sbatch.
 
+cd ..
+mkdir trim
+cd trim
 module unload fastqc
 
 
