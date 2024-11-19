@@ -25,7 +25,7 @@ For different programs, you would have two ways to run those:
 cd $WORK
 mkdir final_project
 cd final_project
-cp -r /work/yinlab/xinpeng/final_course_project/new/final_process/part0_raw_data .
+cp -r /work/yinlab/yixing/course_project2/part0_raw_data .
 
 
 #part1, data preprocessing (~ 5hrs)
