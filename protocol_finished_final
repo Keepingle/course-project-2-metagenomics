@@ -38,7 +38,7 @@ cp -r /work/yinlab/yixing/course_project2/project_raw_data .
 mkdir part1_data_preprocessing
 cd part1_data_preprocessing
 mkdir prefastqc
-cd prefastqc/
+cd prefastqc
 ml fastqc
 fastqc ../../project_raw_data/MZCH241_bacteria.R_1.fastq --outdir .
 fastqc ../../project_raw_data/MZCH241_bacteria.R_2.fastq --outdir .
@@ -56,8 +56,6 @@ fastqc ../../project_raw_data/MZCH241_bacteria.R_2.fastq --outdir .
 cd ..
 mkdir trim
 cd trim
-module unload fastqc
-
 
 #!/bin/bash
 #SBATCH --job-name=trim
@@ -69,6 +67,7 @@ module unload fastqc
 #SBATCH --ntasks=20	
 #SBATCH --cpus-per-task=1
 
+module unload fastqc
 module load trim_galore/0.6
 trim_galore --paired your/path/of/fastq1.gz_file  your/path/of/fastq2.gz_file  -j 20
 
@@ -76,6 +75,10 @@ trim_galore --paired your/path/of/fastq1.gz_file  your/path/of/fastq2.gz_file  -
 
 
 #3. Use fastqc again to check the quality again, and report the difference. You will get the trimmed read fastq files.
+cd ..
+mkdir postfastqc
+cd postfastqc
+# Run fastqc again
 
 #part2, remove algae genes from raw reads (~ 1-2 hrs).
 We want to analyze the microbiome data not the host data, so we need to remove those. Therefore, we need to prepare the reference genome file, which means the genomes we would like to remove, and use tools called Bowtie2 and samtools to do that. Here our reference genomes include algal nuclear genomes, plastid genomes, and mitogenomes sequencing by our lab. We'll then make index file for read mapping to the reference genomes. The algae_reference_genome.fna will be the reference genome file.
