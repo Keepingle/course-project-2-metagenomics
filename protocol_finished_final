@@ -28,7 +28,7 @@ cd final_project
 cp -r /work/yinlab/yixing/course_project2/project_raw_data .
 
 
-#part1, data preprocessing (~ 5hrs)
+#part1, data preprocessing (~ 1hrs)
 
 #We need check the quality of sequencing data first, and trim low quality data to get better results.
 #we will use fastqc to do the quality check, and use trim_galore to do the trim.
@@ -47,7 +47,7 @@ fastqc ../../project_raw_data/MZCH241_bacteria.R_2.fastq --outdir .
 #Download the html file to your laptop (use HCC ondemand) and see the results.
 #Report the results of quality check, and explain the meaning of each plot.
 
-#2. After that, we would delete those low quality reads by trimming using trim_galore (2-4hrs, depends the cores you used).
+#2. After that, we would delete those low quality reads by trimming using trim_galore (15 mins, depends the cores you used).
 
 #Remember to do module unload your_previous_program, because sometimes different program may cause conflicts.
 #won't remind you again.
@@ -83,10 +83,10 @@ cd postfastqc
 #part2, remove algae genes from raw reads (~ 1-2 hrs).
 We want to analyze the microbiome data not the host data, so we need to remove those. Therefore, we need to prepare the reference genome file, which means the genomes we would like to remove, and use tools called Bowtie2 and samtools to do that. Here our reference genomes include algal nuclear genomes, plastid genomes, and mitogenomes sequencing by our lab. We'll then make index file for read mapping to the reference genomes. The algae_reference_genome.fna will be the reference genome file.
 
-cd ..
+cd ../..
 mkdir part2_remove_algae_genomes
 cd part2_remove_algae_genomes
-cp -r /work/yinlab/xinpeng/final_course_project/new/reference_genome .
+cp -r /work/yinlab/yixing/course_project2/project_raw_data/reference_genome .
 cat * > algae_reference_genome.fna 
 
 
@@ -107,7 +107,7 @@ ml samtools/1.9
 
 bowtie2-build your_reference_genome_file index_prefix
 
-bowtie2 -x index_prefix  -1 your/path/of/trimmed_fastq1.gz_file -2 your/path/of/trimmed_fastq2.gz_file -S bowtie2_alignments.sam --local -p $SLURM_NTASKS_PER_NODE
+bowtie2 -x index_prefix  -1 your/path/of/trimmed_fastq1_file -2 your/path/of/trimmed_fastq2_file -S bowtie2_alignments.sam --local -p $SLURM_NTASKS_PER_NODE
 
 samtools view -bS -@ 16 bowtie2_alignments.sam > bowtie2_alignments.bam
 
