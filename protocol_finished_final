@@ -128,6 +128,8 @@ samtools fastq -@ 16 -1 unmapped_1.fastq -2 unmapped_2.fastq unmapped.bam
 #part3, assmebly with filtered reads (We will use two different tools : Megahit with ~40mins and MetaSPAde with ~8hrs).
 #you will compare the results between two tools.
 
+mkdir part3_assmebly
+cd part3_assmebly
 
 #!/bin/bash
 #SBATCH --job-name=megahit
@@ -171,6 +173,8 @@ spades.py --meta -1 unmapped_1.fastq -2 unmapped_2.fastq -o metaspade_result --t
 
 #part4, bin contigs to make bins (MAGs) based on metawrap(~2.5 hrs).
 #your_assembly_contig_fasta_file is the file name of whichever assembly file you will use (contigs.fasta from metaSPAde or final.contigs.fa from megahit).
+mkdir part4_binning
+cd part4_binning
 
 #!/bin/bash
 #SBATCH --job-name=metawrap
@@ -200,12 +204,6 @@ metawrap bin_refinement -o BIN_REFINEMENT_megahit -t 32 -A BINNING_megahit/metab
 
 mkdir part5_checkm2
 cd part5_checkm2
-git clone --recursive https://github.com/chklovski/checkm2.git && cd checkm2
-conda env create -n checkm2 -f checkm2.yml
-conda activate checkm2
-bin/checkm2 -h #to check if it works
-checkm2 database --download --path /custom/path/
-export CHECKM2DB="path/to/database"
 
 #!/bin/bash
 #SBATCH --job-name=checkm2
@@ -217,9 +215,7 @@ export CHECKM2DB="path/to/database"
 #SBATCH --error=checkm2.%J.err
 #SBATCH --partition=yinlab,batch,guest
 
-ml anaconda
-
-conda activate checkm2
+ml checkm2/1.0
 
 
 your/own/path/bin/checkm2  predict --threads 16 --input ../bining/BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa  --output-directory checkm2_result
