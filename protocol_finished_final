@@ -244,6 +244,11 @@ gtdbtk classify_wf --genome_dir ../part4_binning/BIN_REFINEMENT_megahit/metawrap
 
 #part7, use DRAM for MAG functional annotation.
 
+
+
+mkdir part7_functional_annotation
+cd part7_functional_annotation
+
 #!/bin/bash
 #SBATCH --job-name=dram
 #SBATCH --nodes=1
