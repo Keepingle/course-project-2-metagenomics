@@ -216,7 +216,7 @@ cd part5_checkm2
 ml checkm2/1.0
 
 
-predict --threads 16 --input ../bining/BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa  --output-directory checkm2_result
+checkm2 predict --threads 16 --input ../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa  --output-directory checkm2_result
 
 #report the results
 
@@ -235,7 +235,7 @@ predict --threads 16 --input ../bining/BIN_REFINEMENT_megahit/metawrap_70_10_bin
 
 ml gtdbtk/1.5 
 
-gtdbtk classify_wf --genome_dir ../bining/BIN_REFINEMENT_megahit/metawrap_70_10_bins/ --out_dir GTDB/ --cpus 16 --extension .fa
+gtdbtk classify_wf --genome_dir ../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/ --out_dir GTDB/ --cpus 16 --extension .fa
 
 #you need to report the taxonomic assignment for each MAG from GTDB.
 
