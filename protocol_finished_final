@@ -199,8 +199,6 @@ metawrap bin_refinement -o BIN_REFINEMENT_megahit -t 32 -A BINNING_megahit/metab
 
 
 #part5, check the quality of bins by CheckM2.
-#checkM is included in metawrap, but they update it as CheckM2 this year.
-#on hcc they have not installed CheckM2, so we'll use conda to install it.
 
 mkdir part5_checkm2
 cd part5_checkm2
@@ -218,7 +216,7 @@ cd part5_checkm2
 ml checkm2/1.0
 
 
-your/own/path/bin/checkm2  predict --threads 16 --input ../bining/BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa  --output-directory checkm2_result
+predict --threads 16 --input ../bining/BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa  --output-directory checkm2_result
 
 #report the results
 
