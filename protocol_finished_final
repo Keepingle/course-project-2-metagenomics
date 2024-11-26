@@ -171,7 +171,7 @@ spades.py --meta -1 unmapped_1.fastq -2 unmapped_2.fastq -o metaspade_result --t
 
 
 
-#part4, bin contigs to make bins (MAGs) based on metawrap(~2.5 hrs).
+#part4, bin contigs to make bins (MAGs) based on metawrap(~3.5 hrs).
 #your_assembly_contig_fasta_file is the file name of whichever assembly file you will use (contigs.fasta from metaSPAde or final.contigs.fa from megahit).
 mkdir part4_binning
 cd part4_binning
@@ -235,7 +235,7 @@ cd part6_taxonomic_annotation
 #SBATCH --error=gtdb.%J.err
 #SBATCH --partition=yinlab,batch,guest
 
-ml gtdbtk/1.5 
+ml gtdbtk/2.4
 
 gtdbtk classify_wf --genome_dir ../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/ --out_dir GTDB/ --cpus 16 --extension .fa
 
