@@ -222,6 +222,8 @@ checkm2 predict --threads 16 --input ../part4_binning/BIN_REFINEMENT_megahit/met
 
 #part6, taxonomic annotation by GTDB (~1-2hrs).
 
+mkdir part5_taxonomic_annotation
+cd part5_taxonomic_annotation
 
 #!/bin/bash
 #SBATCH --job-name=gtdb
