@@ -235,7 +235,7 @@ cd part6_taxonomic_annotation
 #SBATCH --error=gtdb.%J.err
 #SBATCH --partition=yinlab,batch,guest
 
-ml gtdbtk/2.4
+ml gtdbtk/1.5
 
 gtdbtk classify_wf --genome_dir ../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/ --out_dir GTDB/ --cpus 16 --extension .fa
 
