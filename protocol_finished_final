@@ -259,7 +259,7 @@ cd part7_functional_annotation
 #SBATCH --error=dram.%J.err
 #SBATCH --partition=yinlab,batch,guest
 
-ml dram/1.2
+ml dram/1.5
 
 DRAM.py annotate -i '../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa' -o annotation
 DRAM.py distill -i annotation/annotations.tsv -o distill --trna_path annotation/trnas.tsv --rrna_path annotation/rrnas.tsv
