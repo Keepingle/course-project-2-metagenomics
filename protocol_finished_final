@@ -249,22 +249,37 @@ gtdbtk classify_wf --genome_dir ../part4_binning/BIN_REFINEMENT_megahit/metawrap
 mkdir part7_functional_annotation
 cd part7_functional_annotation
 
+
 #!/bin/bash
 #SBATCH --job-name=dram
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
 #SBATCH --time=168:00:00
-#SBATCH --mem=250gb
+#SBATCH --mem=20gb
 #SBATCH --output=dram.%J.out
 #SBATCH --error=dram.%J.err
-#SBATCH --partition=yinlab,batch,guest
+#SBATCH --partition=batch,guest
 
 ml dram/1.2
+INPUT=$1
+NAME=$2
+DRAM.py annotate -i $INPUT -o annotation_${NAME} --threads 16
 
-DRAM.py annotate -i '../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/*.fa' -o annotation --threads 16
-DRAM.py distill -i annotation/annotations.tsv -o distill --trna_path annotation/trnas.tsv --rrna_path annotation/rrnas.tsv
+----------------------------------------------------------------------------------------------
 
+for i in `ls ../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/`; do sbatch dram.sh ../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/$i $i ; done
 
+mkdir annotationtest_bin_total
+cp -r annotation_bin.* annotationtest_bin_total
+cd annotationtest_bin_total
+cat `find . -name annotations.tsv` > total.annotations.tsv
+sed '/start_position/d' total.annotations.tsv | sed '1i \t\tfasta\tscaffold\tgene_position\tstart_position\tend_position\tstrandedness\trank\tkegg_id\tkegg_hit\tpeptidase_id\tpeptidase_family\tpeptidase_hit\tpeptidase_RBH\tpeptidase_identity\tpeptidase_bitScore\tpeptidase_eVal\tpfam_hits\tcazy_hits\tvogdb_description\tvogdb_categories\theme_regulatory_motif_count' | sed 's/t//' > total.annotations.tsv_revised
+cat `find . -name trnas.tsv` > total.trnas.tsv
+sed '/End/d' total.trnas.tsv | sed '1i fasta\tName\ttRNA #\tBegin\tEnd\tType\tCodon\tScore\tNote' > total.trnas.tsv_revised
+cat `find . -name rrnas.tsv` > total.rrnas.tsv
+sed '/e-value/d' total.rrnas.tsv | sed '1i scaffold\tfasta\tbegin\tend\tstrand\ttype\te-value\tnote' > total.rrnas.tsv_revised
+ml dram/1.2
+DRAM.py distill -i total.annotations.tsv_revised -o distill --trna_path total.trnas.tsv_revised --rrna_path total.rrnas.tsv_revised
 
 #report the results of DRAM.
 
