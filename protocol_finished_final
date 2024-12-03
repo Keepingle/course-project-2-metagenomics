@@ -270,8 +270,8 @@ DRAM.py annotate -i $INPUT -o annotation_${NAME} --threads 16
 for i in `ls ../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/`; do sbatch dram.sh ../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/$i $i ; done
 
 mkdir annotationtest_bin_total
-cp -r annotation_bin.* annotationtest_bin_total
-cd annotationtest_bin_total
+cp -r annotation_bin.* annotation_bin_total
+cd annotation_bin_total
 cat `find . -name annotations.tsv` > total.annotations.tsv
 sed '/start_position/d' total.annotations.tsv | sed '1i \t\tfasta\tscaffold\tgene_position\tstart_position\tend_position\tstrandedness\trank\tkegg_id\tkegg_hit\tpeptidase_id\tpeptidase_family\tpeptidase_hit\tpeptidase_RBH\tpeptidase_identity\tpeptidase_bitScore\tpeptidase_eVal\tpfam_hits\tcazy_hits\tvogdb_description\tvogdb_categories\theme_regulatory_motif_count' | sed 's/t//' > total.annotations.tsv_revised
 cat `find . -name trnas.tsv` > total.trnas.tsv
