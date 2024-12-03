@@ -266,7 +266,7 @@ NAME=$2
 DRAM.py annotate -i $INPUT -o annotation_${NAME} --threads 16
 
 ----------------------------------------------------------------------------------------------
-
+# ~ 50 minutes
 for i in `ls ../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/`; do sbatch dram.sh ../part4_binning/BIN_REFINEMENT_megahit/metawrap_70_10_bins/$i $i ; done
 
 mkdir annotationtest_bin_total
