@@ -168,7 +168,9 @@ spades.py --meta -1 unmapped_1.fastq -2 unmapped_2.fastq -o metaspade_result --t
 #you can compare the difference between two contig files (number, length, etc.).
 #for this project, we recommend to use megahit result for the all the following analyses.
 #but you are free to choose metaSPAde result, or do both
-
+### contig count and length
+ml seqkit
+seqkit stats your_contig_file.fa 
 
 
 #part4, bin contigs to make bins (MAGs) based on metawrap(~3.5 hrs).
