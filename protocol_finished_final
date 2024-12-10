@@ -284,7 +284,10 @@ ml dram/1.2
 DRAM.py distill -i total.annotations.tsv_revised -o distill --trna_path total.trnas.tsv_revised --rrna_path total.rrnas.tsv_revised
 
 #report the results of DRAM.
-
+Listed below are resources that can help you to explain the results of DRAM.
+https://www.emsl.pnnl.gov/sites/default/files/2021-06/1.5.BortonShafferDRAM.pdf
+https://genomicsaotearoa.github.io/metagenomics_summer_school/day4/ex15_gene_annotation_part3/#dram-vpy-distill-output-files
+https://academic.oup.com/nar/article/48/16/8883/5884738
 
 
 
